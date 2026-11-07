@@ -1,0 +1,21 @@
+---
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:stable_freqai
+    # Décommentez pour la version avec PyTorch :
+    # image: freqtradeorg/freqtrade:stable_freqaitorch
+    restart: unless-stopped
+    container_name: freqtrade
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # Port pour FreqUI (interface web)
+    ports:
+      - "8080:8080"
+    # Lancement du bot avec la stratégie FreqAI et le modèle LightGBM
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --db-url sqlite:////freqtrade/user_data/tradesv3.sqlite
+      --config /freqtrade/user_data/config.json
+      --strategy FreqaiExampleStrategy
+      --freqaimodel LightGBMRegressor
