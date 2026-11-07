@@ -98,7 +98,11 @@
         "verbosity": "info",
         "enable_openapi": false,
         "jwt_secret_key": "antigravity-secret-key-change-me-12345",
-        "CORS_origins": [],
+        "CORS_origins": [
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+            "https://frequi.freqtrade.io"
+        ],
         "username": "freqtrader",
         "password": "SuperSecurePassword123!",
         "ws_token": "freqtrade-secret-token"
