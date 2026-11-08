@@ -30,18 +30,18 @@ AntigravityCloud/
 
 ## ⚡ Démarrage rapide
 
-### 1. Télécharger des données historiques de marché (recommandé pour FreqAI)
-Avant de lancer le bot ou un backtest, téléchargez des données pour les paires surveillées :
+### 1. Télécharger des données historiques de marché Kraken
+Avant de lancer le bot ou un backtest, téléchargez les données Kraken pour les paires sélectionnées :
 ```bash
-docker compose run --rm freqtrade download-data --pairs BTC/USDT ETH/USDT SOL/USDT ADA/USDT --timeframes 5m 15m 1h --days 30 --exchange binance
+docker compose run --rm freqtrade download-data --pairs BTC/EUR ETH/EUR SOL/EUR ADA/EUR --timeframes 5m 15m 1h --days 30 --exchange kraken
 ```
 
-### 2. Démarrer le bot (Dry-Run / Simulation)
+### 2. Démarrer le bot (Dry-Run / Simulation Kraken)
 Lancez le bot en tâche de fond :
 ```bash
 docker compose up -d
 ```
-> Le bot démarre par défaut en mode **Dry-Run** (aucun argent réel utilisé, simulation avec capital virtuel de 1000 USDT).
+> Le bot démarre par défaut en mode **Dry-Run** (simulation sans argent réel, capital virtuel de 1000 EUR avec les cours Kraken en direct).
 
 ### 3. Accéder à l'interface web (FreqUI)
 Ouvrez votre navigateur sur :
@@ -77,6 +77,31 @@ Ouvrez votre navigateur sur :
 
 ---
 
+## 🐙 Connexion à Kraken
+
+### Mode Simulation (Dry-Run - Recommandé pour commencer)
+Dans `user_data/config.json`, `"dry_run": true` :
+* Aucun compte Kraken ni clé API n'est requis.
+* Le bot se connecte à l'API publique de Kraken pour lire les prix et simuler les achats/ventes avec un portefeuille fictif de 1000 EUR.
+
+### Mode Réel (Live Trading)
+Pour passer en argent réel avec votre compte Kraken :
+1. Créez une clé API sur votre compte Kraken (**Settings > API**).
+   > ⚠️ **Sécurité cruciale :** Cochez uniquement les permissions **Query Funds**, **Query Open Orders & Trades**, **Query Closed Orders & Trades**, **Create & Modify Orders**, et **Cancel/Close Orders**. Ne cochez **JAMAIS** les droits de **Withdrawal / Retrait** !
+2. Ouvrez `user_data/config.json` et configurez vos clés :
+   ```json
+   "dry_run": false,
+   "exchange": {
+       "name": "kraken",
+       "key": "VOTRE_CLE_API_KRAKEN",
+       "secret": "VOTRE_SECRET_KRAKEN",
+   ...
+   ```
+3. Redémarrez le bot avec `docker compose restart`.
+
+---
+
 ## ⚙️ Personnalisation de FreqAI
 FreqAI utilise par défaut le modèle **LightGBMRegressor**.
 Pour changer de modèle ou ajuster les paramètres (indicateurs, fenêtres d'entraînement, etc.), éditez la section `"freqai"` dans `user_data/config.json`.
+
