@@ -30,18 +30,18 @@ AntigravityCloud/
 
 ## ⚡ Démarrage rapide
 
-### 1. Télécharger des données historiques de marché Kraken
-Avant de lancer le bot ou un backtest, téléchargez les données Kraken pour les paires sélectionnées :
+### 1. Télécharger des données historiques de marché (pour FreqAI)
+Avant de lancer le bot ou un backtest, téléchargez les données Binance pour les paires sélectionnées :
 ```bash
-docker compose run --rm freqtrade download-data --pairs BTC/EUR ETH/EUR SOL/EUR ADA/EUR --timeframes 5m 15m 1h --days 30 --exchange kraken
+docker compose run --rm freqtrade download-data --pairs BTC/USDT ETH/USDT SOL/USDT ADA/USDT --timeframes 5m 15m 1h --days 30 --exchange binance
 ```
 
-### 2. Démarrer le bot (Dry-Run / Simulation Kraken)
+### 2. Démarrer le bot (Dry-Run / Simulation FreqAI)
 Lancez le bot en tâche de fond :
 ```bash
 docker compose up -d
 ```
-> Le bot démarre par défaut en mode **Dry-Run** (simulation sans argent réel, capital virtuel de 1000 EUR avec les cours Kraken en direct).
+> Le bot démarre par défaut en mode **Dry-Run** (simulation sans argent réel, capital virtuel de 1000 USDT avec les cours Binance en direct).
 
 ### 3. Accéder à l'interface web (FreqUI)
 Ouvrez votre navigateur sur :

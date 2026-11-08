@@ -1,7 +1,7 @@
 {
     "$schema": "https://schema.freqtrade.io/schema.json",
     "max_open_trades": 3,
-    "stake_currency": "EUR",
+    "stake_currency": "USDT",
     "stake_amount": 100,
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "EUR",
@@ -34,19 +34,20 @@
         "order_book_top": 1
     },
     "exchange": {
-        "name": "kraken",
+        "name": "binance",
         "key": "",
         "secret": "",
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
-            "BTC/EUR",
-            "ETH/EUR",
-            "SOL/EUR",
-            "ADA/EUR"
+            "BTC/USDT",
+            "ETH/USDT",
+            "SOL/USDT",
+            "ADA/USDT"
         ],
         "pair_blacklist": [
-            ".*(AUD|CAD|GBP|JPY|CHF|USDC)/.*"
+            "(BNB)/.*",
+            ".*(DOWN|UP|BULL|BEAR)/.*"
         ]
     },
     "pairlists": [
@@ -57,10 +58,10 @@
     "freqai": {
         "enabled": true,
         "purge_old_models": 2,
-        "train_period_days": 2,
-        "backtest_period_days": 1,
+        "train_period_days": 15,
+        "backtest_period_days": 7,
         "save_backtest_models": false,
-        "live_retrain_hours": 0,
+        "live_retrain_hours": 1,
         "identifier": "freqai-antigravity",
         "feature_parameters": {
             "include_timeframes": [
@@ -69,8 +70,8 @@
                 "1h"
             ],
             "include_corr_pairlist": [
-                "BTC/EUR",
-                "ETH/EUR"
+                "BTC/USDT",
+                "ETH/USDT"
             ],
             "label_period_candles": 20,
             "include_shifted_candles": 2,
