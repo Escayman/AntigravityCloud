@@ -1,5 +1,7 @@
 import logging
+from datetime import datetime
 from functools import reduce
+from typing import Optional
 
 import talib.abstract as ta
 from pandas import DataFrame
@@ -291,3 +293,36 @@ class FreqaiExampleStrategy(IStrategy):
                 return False
 
         return True
+
+    def custom_stake_amount(
+        self,
+        pair: str,
+        current_time: datetime,
+        current_rate: float,
+        proposed_stake: float,
+        min_stake: Optional[float],
+        max_stake: float,
+        leverage: float,
+        entry_tag: Optional[str],
+        side: str,
+        **kwargs,
+    ) -> float:
+        """
+        Allocation du capital :
+        - 85% sur BTC/EUR
+        - 15% sur ETH/EUR
+        S'adapte dynamiquement au capital total du portefeuille (EUR).
+        """
+        total_wallet = self.wallets.get_total_stake_amount()
+
+        if "BTC" in pair:
+            desired_stake = total_wallet * 0.85
+        elif "ETH" in pair:
+            desired_stake = total_wallet * 0.15
+        else:
+            desired_stake = proposed_stake
+
+        if min_stake:
+            desired_stake = max(desired_stake, min_stake)
+        return min(desired_stake, max_stake)
+

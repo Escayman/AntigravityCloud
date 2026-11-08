@@ -1,12 +1,12 @@
 {
     "$schema": "https://schema.freqtrade.io/schema.json",
-    "max_open_trades": 3,
+    "max_open_trades": 2,
     "stake_currency": "EUR",
-    "stake_amount": 100,
+    "stake_amount": "unlimited",
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "EUR",
     "dry_run": true,
-    "dry_run_wallet": 1000,
+    "dry_run_wallet": 200,
     "cancel_open_orders_on_exit": false,
     "timeframe": "5m",
     "trailing_stop": false,
@@ -41,9 +41,7 @@
         "ccxt_async_config": {},
         "pair_whitelist": [
             "BTC/EUR",
-            "ETH/EUR",
-            "SOL/EUR",
-            "ADA/EUR"
+            "ETH/EUR"
         ],
         "pair_blacklist": [
             "(BNB)/.*",
