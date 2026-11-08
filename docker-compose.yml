@@ -8,9 +8,9 @@ services:
     container_name: freqtrade
     volumes:
       - "./user_data:/freqtrade/user_data"
-    # Port pour FreqUI (interface web)
+    # Port pour FreqUI (interface web) déplacé sur 8081 car 8080 est occupé
     ports:
-      - "8080:8080"
+      - "8081:8080"
     # Lancement du bot avec la stratégie FreqAI et le modèle LightGBM
     command: >
       trade
