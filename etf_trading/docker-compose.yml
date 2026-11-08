@@ -1,0 +1,10 @@
+services:
+  etf-bot:
+    build: .
+    container_name: t212_etf_bot
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --daemon

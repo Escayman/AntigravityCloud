@@ -1,0 +1,31 @@
+{
+    "trading212": {
+        "api_key": "VOTRE_CLE_API_TRADING_212",
+        "api_secret": "VOTRE_SECRET_API_TRADING_212",
+        "environment": "demo",
+        "comment_env": "'demo' pour tester sans risque avec de l'argent virtuel, 'live' pour le compte reel"
+    },
+    "strategy": {
+        "mode": "hybrid",
+        "comment_mode": "'hybrid' (DCA + filtre SMA200), 'dca_only' (accumulation pure), 'trend_only' (momentum)",
+        "sma_period": 200,
+        "sma_fast_period": 50,
+        "bearish_action": "exit_to_cash",
+        "comment_bearish": "'exit_to_cash' (vend l'ETF et reste en EUR liquide lors des krachs) ou 'pause_buys' (garde l'ETF mais arrete d'en acheter)",
+        "rebalance_threshold_percent": 5.0,
+        "cash_reserve_percent": 2.0,
+        "check_interval_hours": 24
+    },
+    "portfolio": {
+        "VUAA.DE": {
+            "t212_ticker": "VUAA_DE_EQ",
+            "name": "Vanguard S&P 500 UCITS ETF (EUR)",
+            "target_allocation": 0.60
+        },
+        "EQAC.DE": {
+            "t212_ticker": "EQAC_DE_EQ",
+            "name": "Invesco EQQQ Nasdaq 100 UCITS ETF (EUR)",
+            "target_allocation": 0.40
+        }
+    }
+}
