@@ -57,8 +57,8 @@
     "freqai": {
         "enabled": true,
         "purge_old_models": 2,
-        "train_period_days": 15,
-        "backtest_period_days": 7,
+        "train_period_days": 2,
+        "backtest_period_days": 1,
         "save_backtest_models": false,
         "live_retrain_hours": 0,
         "identifier": "freqai-antigravity",
