@@ -444,26 +444,34 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         let allocChart = null;
 
         function initChart() {
-            const canvas = document.getElementById('allocationChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            allocChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['S&P 500 (VUAA)', 'Nasdaq 100 (EQAC)'],
-                    datasets: [{
-                        data: [60, 40],
-                        backgroundColor: ['#3B82F6', '#A855F7'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    cutout: '72%'
+            try {
+                if (typeof Chart === 'undefined') {
+                    console.warn("Chart.js non chargé ou bloqué par le navigateur.");
+                    return;
                 }
-            });
+                const canvas = document.getElementById('allocationChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                allocChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['S&P 500 (VUAA)', 'Nasdaq 100 (EQAC)'],
+                        datasets: [{
+                            data: [60, 40],
+                            backgroundColor: ['#3B82F6', '#A855F7'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        cutout: '72%'
+                    }
+                });
+            } catch (e) {
+                console.warn("Erreur initChart :", e);
+            }
         }
 
         async function fetchStatus() {
@@ -667,9 +675,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         window.onload = () => {
-            initChart();
             fetchStatus();
-            // Polling doux toutes les 15s pour mettre à jour l'interface
+            initChart();
             setInterval(fetchStatus, 15000);
         };
     </script>
