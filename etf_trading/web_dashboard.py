@@ -1,7 +1,7 @@
 """
 Antigravity Cloud - ETF Trading Web Dashboard
 Interface Web interactive, moderne et temps réel pour piloter la stratégie hybride Trading 212.
-Fonctionne avec le serveur HTTP Python standard multithreadé (zéro dépendance externe).
+Pré-remplissage instantané des données côté serveur (rendu en 0 ms garanti).
 Port par défaut : 8085
 """
 
@@ -24,7 +24,7 @@ logger = logging.getLogger("ETFWebDashboard")
 
 
 def safe_num(val: Any, default: float = 0.0) -> float:
-    """Garantit qu'aucun NaN ou Inf ne casse la sérialisation JSON en JavaScript."""
+    """Garantit qu'aucun NaN ou Inf ne casse la sérialisation JSON."""
     try:
         f = float(val)
         if math.isnan(f) or math.isinf(f):
@@ -53,7 +53,6 @@ class ETFTradingState:
         self.lock = threading.Lock()
         self.config = {}
         self.is_refreshing = False
-        self.last_update = "--:--:--"
         self.cached_status = {
             "environment": "DEMO",
             "mode": "HYBRID",
@@ -67,7 +66,6 @@ class ETFTradingState:
             "is_loading": True
         }
         self.reload_config()
-        # Lancer le premier rafraîchissement
         self.refresh()
 
     def reload_config(self):
@@ -84,21 +82,17 @@ class ETFTradingState:
             logger.error(f"Erreur chargement config : {e}")
 
     def get_status(self) -> Dict[str, Any]:
-        """Retourne immédiatement le cache sans bloquer l'interface."""
         with self.lock:
             return dict(self.cached_status)
 
     def refresh(self) -> Dict[str, Any]:
-        """Effectue une analyse complète (Trading 212 + Yahoo Finance)."""
         with self.lock:
             if self.is_refreshing:
                 return self.cached_status
             self.is_refreshing = True
 
         try:
-            logger.info("Actualisation des données de marché et de compte...")
             self.reload_config()
-
             env = self.config.get("trading212", {}).get("environment", "demo").upper()
             mode = self.config.get("strategy", {}).get("mode", "hybrid").upper()
             t212_connected = True
@@ -229,7 +223,6 @@ class ETFTradingState:
                 except Exception as e:
                     executed.append({"ticker": o["ticker"], "qty": qty, "error": str(e)})
 
-        # Rafraîchir l'état après exécution
         threading.Thread(target=self.refresh, daemon=True).start()
         return {"status": "ok", "executed": executed}
 
@@ -241,29 +234,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antigravity Cloud - Bot ETF Trading 212</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkbg: '#0B0F19',
-                        cardbg: '#111827',
-                        cardborder: '#1F2937',
-                        accent: '#3B82F6',
-                        emerald: '#10B981',
-                        amber: '#F59E0B',
-                        rose: '#EF4444'
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         body { background-color: #0B0F19; color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(10px); border: 1px solid #1F2937; }
+        .glass-card { background: rgba(17, 24, 39, 0.85); border: 1px solid #1F2937; }
         .pulse-live { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
@@ -274,7 +248,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-gray-800 gap-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-xl font-bold">
-                    <i class="fa-solid fa-chart-line"></i>
+                    📈
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -292,7 +266,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span class="w-2 h-2 rounded-full bg-yellow-400 pulse-live"></span> Initialisation...
                 </span>
                 <button onclick="triggerRefresh()" id="btn-refresh" class="px-4 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs font-medium text-gray-200 transition flex items-center gap-2">
-                    <i class="fa-solid fa-rotate" id="refresh-icon"></i> Actualiser (<span id="last-update">--:--:--</span>)
+                    🔄 Actualiser (<span id="last-update">--:--:--</span>)
                 </button>
             </div>
         </header>
@@ -300,9 +274,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <!-- ALERTE ERREUR T212 (si présente) -->
         <div id="alert-banner" class="hidden mt-6 p-4 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-sm">
             <div class="flex items-start gap-3">
-                <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5"></i>
+                <span class="text-red-400 text-lg">⚠️</span>
                 <div class="flex-1">
-                    <h3 class="font-bold text-red-300">Statut de Connexion Trading 212</h3>
+                    <h3 class="font-bold text-red-300">Statut Trading 212</h3>
                     <p id="alert-message" class="text-xs mt-1 text-red-300/90 whitespace-pre-line"></p>
                 </div>
             </div>
@@ -313,7 +287,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="glass-card p-5 rounded-2xl">
                 <div class="flex items-center justify-between text-gray-400 text-xs font-medium">
                     <span>VALEUR TOTALE DU COMPTE</span>
-                    <i class="fa-solid fa-wallet text-gray-500"></i>
+                    <span>💼</span>
                 </div>
                 <div id="val-total" class="text-2xl font-black text-white mt-2">0.00 €</div>
                 <div class="text-[11px] text-gray-400 mt-1">Positions + Liquidités</div>
@@ -322,7 +296,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="glass-card p-5 rounded-2xl">
                 <div class="flex items-center justify-between text-gray-400 text-xs font-medium">
                     <span>LIQUIDITÉS DISPONIBLES</span>
-                    <i class="fa-solid fa-euro-sign text-emerald-400"></i>
+                    <span>💶</span>
                 </div>
                 <div id="val-cash" class="text-2xl font-black text-emerald-400 mt-2">0.00 €</div>
                 <div class="text-[11px] text-gray-400 mt-1">Prêt pour les futurs achats DCA</div>
@@ -331,7 +305,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="glass-card p-5 rounded-2xl">
                 <div class="flex items-center justify-between text-gray-400 text-xs font-medium">
                     <span>PROFIT / PERTE LATENTE</span>
-                    <i class="fa-solid fa-arrow-trend-up text-blue-400"></i>
+                    <span>📊</span>
                 </div>
                 <div id="val-ppl" class="text-2xl font-black text-gray-300 mt-2">+0.00 €</div>
                 <div class="text-[11px] text-gray-400 mt-1">Performance globale non réalisée</div>
@@ -340,9 +314,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="glass-card p-5 rounded-2xl">
                 <div class="flex items-center justify-between text-gray-400 text-xs font-medium">
                     <span>BOUCLIER ANTI-KRACH</span>
-                    <i class="fa-solid fa-shield-halved text-blue-400"></i>
+                    <span>🛡️</span>
                 </div>
-                <div id="shield-status" class="text-xl font-bold text-emerald-400 mt-2">🟢 ACTIF (100%)</div>
+                <div id="shield-status" class="text-xl font-bold text-emerald-400 mt-2">🟢 ACTIF</div>
                 <div class="text-[11px] text-gray-400 mt-1">Surveillance SMA 200 en direct</div>
             </div>
         </div>
@@ -353,22 +327,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="lg:col-span-2 space-y-4">
                 <div class="flex items-center justify-between">
                     <h2 class="text-sm font-bold tracking-wider text-gray-300 uppercase flex items-center gap-2">
-                        <i class="fa-solid fa-radar text-blue-400"></i> Signaux Techniques & Tendance (SMA 200)
+                        📡 Signaux Techniques & Tendance (SMA 200)
                     </h2>
                     <span class="text-xs text-gray-500">Source : Yahoo Finance Live</span>
                 </div>
 
                 <div id="signals-container" class="space-y-4">
-                    <div class="glass-card p-6 rounded-2xl text-center text-gray-400 text-sm">
-                        <i class="fa-solid fa-spinner fa-spin text-blue-400 text-xl mb-2"></i><br>
-                        Calcul des moyennes mobiles 200 jours et RSI...
-                    </div>
+                    <!-- Rempli en direct -->
                 </div>
 
                 <!-- TABLEAU DES POSITIONS TRADING 212 -->
                 <div class="glass-card p-5 rounded-2xl mt-6">
                     <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-purple-400"></i> Portefeuille Détenu sur Trading 212
+                        📦 Portefeuille Détenu sur Trading 212
                     </h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs text-gray-300">
@@ -394,22 +365,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
             <!-- COLONNE 3 : ALLOCATION & ORDRES PROPOSÉS -->
             <div class="space-y-6">
-                <!-- ALLOCATION DONUT -->
+                <!-- ALLOCATION -->
                 <div class="glass-card p-5 rounded-2xl">
                     <h2 class="text-sm font-bold tracking-wider text-gray-300 uppercase flex items-center gap-2 mb-4">
-                        <i class="fa-solid fa-pie-chart text-emerald-400"></i> Répartition Cible
+                        🎯 Répartition Cible
                     </h2>
-                    <div class="h-44 flex items-center justify-center">
-                        <canvas id="allocationChart"></canvas>
-                    </div>
-                    <div class="mt-4 space-y-2 text-xs">
-                        <div class="flex items-center justify-between text-gray-300">
-                            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Vanguard S&P 500 (VUAA)</span>
-                            <span class="font-bold">60%</span>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-blue-400">Vanguard S&P 500 (VUAA)</span>
+                                <span class="font-mono text-gray-300">60%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden">
+                                <div class="bg-blue-500 h-full rounded-full" style="width: 60%"></div>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between text-gray-300">
-                            <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Invesco Nasdaq 100 (EQAC)</span>
-                            <span class="font-bold">40%</span>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-bold text-purple-400">Invesco Nasdaq 100 (EQAC)</span>
+                                <span class="font-mono text-gray-300">40%</span>
+                            </div>
+                            <div class="w-full bg-gray-800 h-3 rounded-full overflow-hidden">
+                                <div class="bg-purple-500 h-full rounded-full" style="width: 40%"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -418,10 +396,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <div class="glass-card p-5 rounded-2xl">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-sm font-bold tracking-wider text-gray-300 uppercase flex items-center gap-2">
-                            <i class="fa-solid fa-robot text-blue-400"></i> Décisions du Bot
+                            🤖 Décisions du Bot
                         </h2>
                         <button onclick="executeBotOrders()" id="btn-exec" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition disabled:opacity-50 flex items-center gap-1.5">
-                            <i class="fa-solid fa-bolt"></i> Exécuter
+                            ⚡ Exécuter
                         </button>
                     </div>
 
@@ -441,67 +419,31 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </footer>
 
     <script>
-        let allocChart = null;
-
-        function initChart() {
-            try {
-                if (typeof Chart === 'undefined') {
-                    console.warn("Chart.js non chargé ou bloqué par le navigateur.");
-                    return;
-                }
-                const canvas = document.getElementById('allocationChart');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                allocChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['S&P 500 (VUAA)', 'Nasdaq 100 (EQAC)'],
-                        datasets: [{
-                            data: [60, 40],
-                            backgroundColor: ['#3B82F6', '#A855F7'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        cutout: '72%'
-                    }
-                });
-            } catch (e) {
-                console.warn("Erreur initChart :", e);
-            }
-        }
+        // DONNÉES PRÉ-CHARGÉES CÔTÉ SERVEUR (0 milliseconde de latence)
+        const SERVER_DATA = __INITIAL_DATA__;
 
         async function fetchStatus() {
             try {
                 const res = await fetch('/api/status');
-                if (!res.ok) throw new Error("Erreur HTTP " + res.status);
+                if (!res.ok) throw new Error("HTTP " + res.status);
                 const data = await res.json();
                 renderUI(data);
             } catch (err) {
-                console.error("Erreur actualisation :", err);
-                const connBadge = document.getElementById('conn-badge');
-                connBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 bg-red-950/60 text-red-400 border border-red-700/50';
-                connBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-400"></span> Hors ligne';
+                console.error("Erreur fetchStatus :", err);
             }
         }
 
         async function triggerRefresh() {
             const btn = document.getElementById('btn-refresh');
-            const icon = document.getElementById('refresh-icon');
-            icon.classList.add('fa-spin');
             btn.disabled = true;
             try {
                 const res = await fetch('/api/refresh', { method: 'POST' });
                 const data = await res.json();
                 renderUI(data);
             } catch (err) {
-                console.error("Erreur rafraîchissement manuel :", err);
+                console.error("Erreur triggerRefresh :", err);
                 await fetchStatus();
             } finally {
-                icon.classList.remove('fa-spin');
                 btn.disabled = false;
             }
         }
@@ -529,10 +471,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
             // Stats
             const cash = data.cash || { total: 0, free: 0, ppl: 0 };
-            document.getElementById('val-total').innerText = (cash.total || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
-            document.getElementById('val-cash').innerText = (cash.free || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+            document.getElementById('val-total').innerText = Number(cash.total || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+            document.getElementById('val-cash').innerText = Number(cash.free || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
             
-            const pplVal = cash.ppl || 0;
+            const pplVal = Number(cash.ppl || 0);
             const pplEl = document.getElementById('val-ppl');
             pplEl.innerText = (pplVal >= 0 ? '+' : '') + pplVal.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
             pplEl.className = pplVal >= 0 ? 'text-2xl font-black text-emerald-400 mt-2' : 'text-2xl font-black text-red-400 mt-2';
@@ -593,13 +535,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         </div>
 
                         <div class="p-3 rounded-xl bg-gray-900/60 border border-gray-800 text-xs text-gray-300">
-                            <i class="fa-solid fa-circle-info text-blue-400 mr-1.5"></i>
-                            <span>${sig.rationale}</span>
+                            ℹ️ <span class="ml-1">${sig.rationale}</span>
                         </div>
                     `;
                     sigContainer.appendChild(card);
                 });
-                document.getElementById('shield-status').innerText = allBullish ? '🟢 SÉCURISÉ (100% MARCHÉ)' : '🔴 PROTECTION KRACH ACTIVÉE';
+                document.getElementById('shield-status').innerText = allBullish ? '🟢 MARCHÉ NORMAL' : '🔴 BOUCLIER KRACH (CASH)';
             }
 
             // Portefeuille
@@ -635,8 +576,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             if (orders.length === 0) {
                 oContainer.innerHTML = `
                     <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/40 text-xs text-emerald-300 flex items-center gap-2">
-                        <i class="fa-solid fa-check-circle text-emerald-400"></i>
-                        <span>Portefeuille parfaitement aligné. Aucun ordre nécessaire !</span>
+                        <span>✅ Portefeuille parfaitement aligné. Aucun ordre nécessaire !</span>
                     </div>
                 `;
             } else {
@@ -660,7 +600,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         async function executeBotOrders() {
             const btn = document.getElementById('btn-exec');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exécution...';
+            btn.innerHTML = '⏳ Exécution...';
             try {
                 const res = await fetch('/api/execute', { method: 'POST' });
                 const result = await res.json();
@@ -670,15 +610,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 alert('Erreur lors de l\'exécution : ' + err);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Exécuter';
+                btn.innerHTML = '⚡ Exécuter';
             }
         }
 
-        window.onload = () => {
+        // RENDU IMMÉDIAT (sans attendre d'appel réseau)
+        if (SERVER_DATA && !SERVER_DATA.is_loading) {
+            renderUI(SERVER_DATA);
+        } else {
             fetchStatus();
-            initChart();
-            setInterval(fetchStatus, 15000);
-        };
+        }
+
+        // Polling en arrière-plan toutes les 15 secondes
+        setInterval(fetchStatus, 15000);
     </script>
 </body>
 </html>
@@ -689,18 +633,19 @@ class ETFRequestHandler(BaseHTTPRequestHandler):
     state: ETFTradingState = None
 
     def log_message(self, format, *args):
-        # Affiche les requêtes dans le terminal pour visibilité
         logger.info(f"{self.address_string()} - {format % args}")
 
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path in ("/", "/index.html"):
+            data = self.state.get_status()
+            # Injection immédiate des données dans le HTML
+            html = HTML_TEMPLATE.replace("__INITIAL_DATA__", json.dumps(data, ensure_ascii=False))
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(HTML_TEMPLATE.encode("utf-8"))
+            self.wfile.write(html.encode("utf-8"))
         elif parsed.path == "/api/status":
-            # Réponse instantanée à partir du cache (< 1 milliseconde)
             data = self.state.get_status()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -746,7 +691,7 @@ def start_server(config_path: str = "config_etf.json", port: int = 8085, host: s
     state = ETFTradingState(config_path=config_path)
     ETFRequestHandler.state = state
 
-    # Tâche de fond pour rafraîchir les données toutes les 60 secondes sans jamais bloquer les pages
+    # Tâche de fond pour rafraîchir les données toutes les 60 secondes
     def background_loop():
         while True:
             time.sleep(60)
