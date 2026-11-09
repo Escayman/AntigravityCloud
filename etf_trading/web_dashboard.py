@@ -541,6 +541,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     sigContainer.appendChild(card);
                 });
                 document.getElementById('shield-status').innerText = allBullish ? '🟢 MARCHÉ NORMAL' : '🔴 BOUCLIER KRACH (CASH)';
+            } else {
+                sigContainer.innerHTML = `
+                    <div class="glass-card p-5 rounded-2xl border border-gray-800 text-center text-gray-400 text-xs">
+                        <span class="inline-block w-2 h-2 rounded-full bg-blue-400 pulse-live mr-2"></span>
+                        Calcul des moyennes mobiles 200 jours et signaux RSI en cours...
+                    </div>
+                `;
             }
 
             // Portefeuille
@@ -615,13 +622,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         // RENDU IMMÉDIAT (sans attendre d'appel réseau)
-        if (SERVER_DATA && !SERVER_DATA.is_loading) {
+        if (typeof SERVER_DATA !== 'undefined' && SERVER_DATA) {
             renderUI(SERVER_DATA);
-        } else {
-            fetchStatus();
         }
-
-        // Polling en arrière-plan toutes les 15 secondes
+        // Rafraîchissement automatique immédiat (1.5s) puis régulier (15s)
+        setTimeout(fetchStatus, 1500);
         setInterval(fetchStatus, 15000);
     </script>
 </body>
