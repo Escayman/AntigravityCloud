@@ -49,15 +49,19 @@ class Trading212Client:
             "User-Agent": "Antigravity-ETF-Bot/1.0",
         }
 
-        # Trading 212 Public API (v0) utilise HTTP Basic Auth avec Key:Secret
-        has_secret = bool(self.api_secret and self.api_secret.strip() and self.api_secret != "VOTRE_SECRET_API_TRADING_212")
-        
-        if has_secret:
+        # Nettoyage des placeholders courants (ex: 'cle', 'secret', etc.)
+        clean_secret = (self.api_secret or "").strip()
+        if clean_secret.lower() in ["cle", "clé", "secret", "votre_secret_api_trading_212", "votre_secret_api_ici", "none", "null"]:
+            clean_secret = ""
+        self.api_secret = clean_secret if clean_secret else None
+
+        # Trading 212 Public API (v0) utilise HTTP Basic Auth avec Key:Secret si secret disponible
+        if self.api_secret:
             auth_string = f"{self.api_key}:{self.api_secret}"
             b64_auth = base64.b64encode(auth_string.encode("utf-8")).decode("ascii")
             headers["Authorization"] = f"Basic {b64_auth}"
         else:
-            # Si pas de secret fourni, tenter avec la clé directe (supporté sur certaines versions)
+            # Si pas de secret fourni, tenter avec la clé directe
             headers["Authorization"] = self.api_key
 
         self.session.headers.update(headers)
@@ -68,7 +72,7 @@ class Trading212Client:
             response = self.session.request(method, url, timeout=self.timeout, **kwargs)
             
             # Si échec 401 et qu'on avait envoyé la clé brute sans secret, tenter avec Bearer
-            if response.status_code == 401 and not (self.api_secret and self.api_secret != "VOTRE_SECRET_API_TRADING_212"):
+            if response.status_code == 401 and not self.api_secret:
                 headers_alt = dict(self.session.headers)
                 headers_alt["Authorization"] = f"Bearer {self.api_key}"
                 retry_resp = requests.request(method, url, headers=headers_alt, timeout=self.timeout, **kwargs)
@@ -80,10 +84,23 @@ class Trading212Client:
 
             if response.status_code == 401:
                 env_hint = "DEMO" if self.environment == "demo" else "LIVE (Réel)"
+                extra_hint = ""
+                # Si échec en mode démo, vérifier si la clé fonctionne sur le serveur Réel (Live)
+                if self.environment == "demo":
+                    try:
+                        live_test_headers = dict(self.session.headers)
+                        live_resp = requests.get(f"{self.LIVE_URL}/equity/account/cash", headers=live_test_headers, timeout=5)
+                        if live_resp.status_code == 200:
+                            extra_hint = "\n  👉 NOTE : Votre clé API est valide sur le compte RÉEL (Live) ! Changez 'environment': 'live' dans config_etf.json."
+                    except Exception:
+                        pass
+
                 raise Trading212Error(
                     f"Erreur 401 : Clé API Trading 212 non reconnue par l'environnement {env_hint}.\n"
-                    f"  1. Avez-vous bien collé l'API Secret dans config_etf.json ? (Trading 212 donne un couple 'Key ID' ET 'Secret').\n"
-                    f"  2. Votre clé a-t-elle été générée sur le compte {env_hint} ? (Les clés Démo et Réel sont distinctes dans T212).\n"
+                    f"  1. 'api_secret' : Si Trading 212 ne vous a donné qu'une seule clé, laissez \"api_secret\": \"\".\n"
+                    f"     (Ne mettez pas le mot 'cle' dedans, sinon T212 croit que votre mot de passe est 'cle').\n"
+                    f"     Si T212 vous a affiché un 'API Secret' à la création, collez ce long code.\n"
+                    f"  2. Votre clé a-t-elle été générée sur le compte {env_hint} ?{extra_hint}\n"
                     f"  3. Si la restriction IP est activée sur T212, assurez-vous que votre IP publique est autorisée."
                 )
             elif response.status_code == 403:
