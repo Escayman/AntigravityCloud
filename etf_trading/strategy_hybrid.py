@@ -4,6 +4,7 @@ Combine la puissance de l'accumulation passive avec la protection contre les kra
 """
 
 import logging
+import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 import numpy as np
@@ -58,7 +59,8 @@ class HybridETFStrategy:
         loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
         rs = gain / (loss + 1e-9)
         rsi = 100 - (100 / (1 + rs))
-        return float(rsi.iloc[-1]) if not rsi.empty else 50.0
+        val = float(rsi.iloc[-1]) if not rsi.empty else 50.0
+        return 50.0 if math.isnan(val) else val
 
     def analyze_etf(self, ticker_yf: str, ticker_t212: str, name: str, target_alloc: float) -> MarketSignal:
         """
@@ -87,6 +89,8 @@ class HybridETFStrategy:
         if df.empty or len(df) < self.sma_period:
             logger.warning(f"Données insuffisantes pour {ticker_yf}, utilisation du dernier cours disponible.")
             current_price = float(df["Close"].iloc[-1]) if not df.empty else 100.0
+            if math.isnan(current_price):
+                current_price = 100.0
             return MarketSignal(
                 ticker_yf=ticker_yf,
                 ticker_t212=ticker_t212,
@@ -103,8 +107,15 @@ class HybridETFStrategy:
 
         close = df["Close"].squeeze()
         current_price = float(close.iloc[-1])
-        sma_200 = float(close.rolling(window=self.sma_period).mean().iloc[-1])
-        sma_50 = float(close.rolling(window=self.sma_fast_period).mean().iloc[-1])
+        if math.isnan(current_price):
+            current_price = 100.0
+
+        sma_200_val = close.rolling(window=self.sma_period).mean().iloc[-1]
+        sma_200 = float(sma_200_val) if not pd.isna(sma_200_val) else current_price
+
+        sma_50_val = close.rolling(window=self.sma_fast_period).mean().iloc[-1]
+        sma_50 = float(sma_50_val) if not pd.isna(sma_50_val) else current_price
+
         rsi_14 = self.compute_rsi(close, period=14)
 
         # Logique de décision Hybride
