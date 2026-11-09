@@ -76,28 +76,46 @@ Ouvrez le fichier [`config_etf.json`](file:///home/antigravity/Escayman/Antigrav
 
 ## 🚀 Lancement
 
-### Option A : En Python direct
+### Option A : Dashboard Web Interactif (Recommandé 🌟)
+
+Lancez le tableau de bord visuel en direct :
 
 ```powershell
-# 1. Aller dans le dossier
+cd $HOME\Documents\AntigravityCloud\etf_trading
+python main.py --web
+```
+Puis ouvrez votre navigateur sur : **[http://localhost:8085](http://localhost:8085)**
+
+> Vous y verrez en temps réel :
+> * Votre solde Trading 212 (Cash libre, valeur du compte, PnL)
+> * Le graphique d'allocation (60% S&P 500 / 40% Nasdaq 100)
+> * Les indicateurs de tendance SMA 200 et RSI 14 avec badges couleur
+> * Les décisions du bot et un bouton pour exécuter les rééquilibrages à la demande.
+
+---
+
+### Option B : Commandes Console (CLI)
+
+```powershell
 cd $HOME\Documents\AntigravityCloud\etf_trading
 
-# 2. Installer les dépendances
-pip install -r requirements.txt
-
-# 3. Voir l'état du compte et les signaux de marché (sans rien acheter)
+# 1. Voir l'état du compte et les signaux en console
 python main.py --status
 
-# 4. Exécuter un cycle réel (passe les ordres sur T212)
+# 2. Exécuter un cycle réel (passe les ordres sur T212)
 python main.py --execute
 
-# 5. Laisser tourner en continu (surveillance quotidienne)
+# 3. Laisser tourner en continu en arrière-plan (surveillance quotidienne)
 python main.py --daemon
 ```
 
-### Option B : Avec Docker (sans rien installer)
+---
+
+### Option C : Avec Docker (sans rien installer)
 
 ```powershell
 cd $HOME\Documents\AntigravityCloud\etf_trading
 docker compose up -d
 ```
+Le dashboard web sera automatiquement disponible sur **http://localhost:8085**.
+

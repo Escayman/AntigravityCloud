@@ -101,8 +101,9 @@ def display_status(
         t212_ticker = etf_data.get("t212_ticker")
         name = etf_data.get("name")
         target_alloc = etf_data.get("target_allocation", 0.5)
+        yf_symbol = etf_data.get("yfinance_ticker", yf_ticker)
 
-        sig = strategy.analyze_etf(yf_ticker, t212_ticker, name, target_alloc)
+        sig = strategy.analyze_etf(yf_symbol, t212_ticker, name, target_alloc)
         signals.append(sig)
 
         badge = "🟢 HAUSSIER (BULL)" if sig.trend == "BULLISH" else ("🟡 REPLI FAVORABLE (DIP)" if sig.trend == "DIP_BUY" else "🔴 BAISSIER (BEAR)")
@@ -148,8 +149,9 @@ def execute_cycle(
     signals = []
     portfolio_cfg = config.get("portfolio", {})
     for yf_ticker, etf_data in portfolio_cfg.items():
+        yf_symbol = etf_data.get("yfinance_ticker", yf_ticker)
         sig = strategy.analyze_etf(
-            yf_ticker,
+            yf_symbol,
             etf_data.get("t212_ticker"),
             etf_data.get("name"),
             etf_data.get("target_allocation", 0.5)
@@ -180,9 +182,17 @@ def main():
     parser.add_argument("--status", action="store_true", help="Affiche l'état du compte et les signaux de marché sans rien modifier.")
     parser.add_argument("--execute", action="store_true", help="Passe réellement les ordres calculés sur Trading 212.")
     parser.add_argument("--daemon", action="store_true", help="Fait tourner le bot en continu selon l'intervalle configuré.")
+    parser.add_argument("--web", action="store_true", help="Lance le Dashboard Web interactif sur http://localhost:8085.")
+    parser.add_argument("--port", type=int, default=8085, help="Port d'écoute du serveur Web (défaut : 8085).")
     parser.add_argument("--config", default="config_etf.json", help="Chemin vers le fichier config_etf.json.")
 
     args = parser.parse_args()
+
+    if args.web:
+        from web_dashboard import start_server
+        start_server(config_path=args.config, port=args.port)
+        return
+
     config = load_config(args.config)
 
     t212_cfg = config.get("trading212", {})
@@ -198,7 +208,7 @@ def main():
 
     print_banner(env, mode)
 
-    if args.status or (not args.execute and not args.daemon):
+    if args.status:
         display_status(client, strategy, config)
     elif args.execute and not args.daemon:
         logger.info(f"Mode exécution directe activé sur l'environnement {env.upper()}.")
@@ -210,6 +220,9 @@ def main():
             execute_cycle(client, strategy, config, dry_run=(not args.execute))
             logger.info(f"Prochain cycle dans {interval_hours} heures...")
             time.sleep(interval_hours * 3600)
+    else:
+        # Par défaut sans argument : affiche le statut
+        display_status(client, strategy, config)
 
 
 if __name__ == "__main__":

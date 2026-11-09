@@ -67,9 +67,23 @@ class HybridETFStrategy:
         """
         logger.info(f"Analyse de tendance pour {name} ({ticker_yf})...")
         
-        # Récupération de 1 an et demi d'historique pour calculer la SMA 200 proprement
+        # Correspondances de secours Yahoo Finance pour les ETFs européens
+        FALLBACK_MAP = {
+            "EQAC.DE": "EQQQ.DE",
+            "EQAC": "EQQQ.DE",
+            "VUAA": "VUAA.DE",
+        }
+
+        # Récupération de l'historique pour calculer la SMA 200 proprement
         df = yf.download(ticker_yf, period="2y", interval="1d", progress=False)
         
+        if (df.empty or len(df) < self.sma_period) and ticker_yf in FALLBACK_MAP:
+            alt_ticker = FALLBACK_MAP[ticker_yf]
+            logger.info(f"Symbole alternatif testé pour {ticker_yf} -> {alt_ticker}")
+            df = yf.download(alt_ticker, period="2y", interval="1d", progress=False)
+            if not df.empty:
+                ticker_yf = alt_ticker
+
         if df.empty or len(df) < self.sma_period:
             logger.warning(f"Données insuffisantes pour {ticker_yf}, utilisation du dernier cours disponible.")
             current_price = float(df["Close"].iloc[-1]) if not df.empty else 100.0

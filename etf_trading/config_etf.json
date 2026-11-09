@@ -19,11 +19,13 @@
     "portfolio": {
         "VUAA.DE": {
             "t212_ticker": "VUAA_DE_EQ",
+            "yfinance_ticker": "VUAA.DE",
             "name": "Vanguard S&P 500 UCITS ETF (EUR)",
             "target_allocation": 0.60
         },
         "EQAC.DE": {
             "t212_ticker": "EQAC_DE_EQ",
+            "yfinance_ticker": "EQQQ.DE",
             "name": "Invesco EQQQ Nasdaq 100 UCITS ETF (EUR)",
             "target_allocation": 0.40
         }
